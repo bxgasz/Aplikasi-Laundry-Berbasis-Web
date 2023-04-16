@@ -73,13 +73,13 @@
           <!-- User Account: style can be found in dropdown.less -->
           <li class="dropdown user user-menu">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-              <img src="{{ url(auth()->user()->foto) }}" class="user-image img-profil" alt="User Image">
+              <img src="@if(auth()->user()->foto != null) {{ url(auth()->user()->foto) }} @endif" class="user-image img-profil" alt="User Image">
               <span class="hidden-xs">{{ auth()->user()->name }}</span>
             </a>
             <ul class="dropdown-menu">
               <!-- User image -->
               <li class="user-header">
-                <img src="{{ url(auth()->user()->foto) }}" class="img-circle img-profil" alt="User Image">
+                <img src="{{ asset(auth()->user()->foto) }}" class="img-circle img-profil" alt="User Image">
 
                 <p>
                   {{ auth()->user()->username }} - {{ auth()->user()->email }}

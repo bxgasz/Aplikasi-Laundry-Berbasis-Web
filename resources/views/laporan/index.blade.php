@@ -1,14 +1,12 @@
 @extends('layouts.master')
 
 @section('title')
-    Laporan Pendapatan {{ tanggal_indonesia($tanggalAwal,false) }} s/d {{ tanggal_indonesia($tanggalAkhir,false) }}
+    Daftar Outlet
 @endsection
-{{-- @push('css')
-    <link rel="stylesheet" href="{{ asset('AdminLTE-2/bower_components/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css') }}">
-@endpush --}}
+
 @section('breadcrumb')
     @parent
-    <li class="active">Laporan</li>
+    <li class="active">Daftar Outlet</li>
 @endsection
 
 @section('content')
@@ -16,16 +14,16 @@
     <div class="col-lg-12">
         <div class="box">
             <div class="box-header with-border">
-                <button onclick="updatePeriode()" class="btn btn-info btn-xs btn-flat"><i class="fa fa-plus-circle"></i> Ubah periode</button>
-                <a href="{{ route('laporan.pdf', [$tanggalAwal, $tanggalAkhir]) }}" target="blank" class="btn btn-success btn-xs btn-flat"><i class="fa fa-file-excel-o"></i> Cetak PDF</a>
+                <button onclick="addForm( '{{ route('outlet.store') }}' )" class="btn btn-success btn-xs btn-flat"><i class="fa fa-plus-circle"></i> Tambah</button>
             </div>
             <div class="box-body table-responsive">
                 <table class="table table-stiped table-bordered">
                     <thead>
                         <th width="5%">No</th>
-                        <th>Tanggal</th>
-                        <th>Penjualan</th>
-                        <th>Pendapatan</th>
+                        <th>Outlet</th>
+                        <th>Alamat</th>
+                        <th>Kontak</th>
+                        <th width="15%"><i class="fa fa-cog"></i></th>
                     </thead>
                 </table>
             </div>
@@ -33,43 +31,87 @@
     </div>
 </div>
 
-@includeIf('laporan.form')
+@includeIf('outlet.form')
+
 @endsection
 
 @push('scripts')
 <script>
     let table;
-
     $(function () {
         table = $('.table').DataTable({
-            responsive: true,
-            processing: true,
-            serverSide: true,
-            autoWidth: false,
+            processing:true,
+            autoWidth:false,
             ajax: {
-                url: '{{ route('laporan.data', [$tanggalAwal, $tanggalAkhir]) }}',
+                url: '{{ route('outlet.data') }}',
             },
             columns: [
-                {data: 'DT_RowIndex', searchable: false, sortable: false},
-                {data: 'tanggal'},
-                {data: 'penjualan'},
-                {data: 'pendapatan'},
-            ],
-            dom : 'Brt',
-            bSort: false,
-            bPaginate: false,
+                {data: 'DT_RowIndex', searchable: false, sortable:false},
+                {data: 'nama_outlet'},
+                {data: 'alamat_outlet'},
+                {data: 'telp_outlet'},
+                {data: 'aksi', searchable: false, sortable:false},
+            ]
         });
-
-        $('.datepicker').datepicker({
-            format:'yyyy-mm-dd',
-            autoclose: true
+        // validator
+        $('#modal-form').validator().on('submit', function(e) {
+            if (!e.preventDefault()){
+                $.post($('#modal-form form').attr('action'), $('#modal-form form').serialize())
+                .done((response) => {
+                    $('#modal-form').modal('hide');
+                    table.ajax.reload();
+                })
+                .fail((errors) => {
+                    alert('Data Gagal Disimpan!!');
+                    return;
+                });
+            }
         });
-
     });
 
-    function updatePeriode() {
+    function addForm(url){
         $('#modal-form').modal('show');
+        $('#modal-form .modal-title').text('Tambah Outlet');
+        $('#modal-form form')[0].reset();
+        $('#modal-form form').attr('action', url);
+        $('#modal-form [name=_method]').val('post');
+        $('#modal-form [name=name]').focus();
     }
 
+    function editForm(url){
+        $('#modal-form').modal('show');
+        $('#modal-form .modal-title').text('Edit Outlet');
+        $('#modal-form form')[0].reset();
+        $('#modal-form form').attr('action', url);
+        $('#modal-form [name=_method]').val('put');
+        $('#modal-form [name=name]').focus();
+
+        $.get(url)
+            .done((response) => {
+                $('#modal-form [name=name]').val(response.nama_outlet);
+                $('#modal-form [name=alamat]').val(response.alamat_outlet);
+                $('#modal-form [name=kontak]').val(response.telp_outlet);
+            })
+            .fail((errors) => {
+                alert('Tidak Dapat Menampilkan Data');
+                return;
+            })
+    }
+
+    function deleteData(url){
+        if (confirm('Yakin Ingin Menghapus Data??')) {
+            $.post(url, {
+            '_token':$('[name=csrf-token]').attr('content'),
+            '_method':'delete'
+            })
+            .done((response) => {
+                table.ajax.reload();
+            })
+            .fail((errors) => {
+                alert('Tidak Dapat Menghapus Data');
+                return;
+            })
+        }
+    }
 </script>
 @endpush
